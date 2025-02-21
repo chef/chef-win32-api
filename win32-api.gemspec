@@ -2,7 +2,7 @@ require 'rubygems'
 
 Gem::Specification.new do |spec|
   spec.name       = 'win32-api'
-  spec.version    = '1.10.1'
+  spec.version    = '1.11.0'
   spec.authors    = ['Daniel J. Berger', 'Park Heesob', 'Hiroshi Hatake']
   spec.license    = 'Artistic-2.0'
   spec.email      = 'djberg96@gmail.com'
@@ -12,12 +12,12 @@ Gem::Specification.new do |spec|
   spec.extensions = ['ext/win32/extconf.rb']
   spec.files      = Dir['**/*'].reject{ |f| f.include?('git') }
 
-  spec.required_ruby_version = '>= 1.8.2'
+  spec.required_ruby_version = '>= 3.1.6'
   spec.extra_rdoc_files = ['CHANGES', 'MANIFEST', 'ext/win32/api.c']
 
-  spec.add_development_dependency('test-unit', '>= 2.5.0')
+  spec.add_development_dependency('test-unit', '>= 3.6.7')
   spec.add_development_dependency('rake')
-  spec.add_development_dependency("rake-compiler", ">= 1.1.9")
+  spec.add_development_dependency("rake-compiler", ">= 1.2.9")
 
   spec.description = <<-EOF
     The Win32::API library is meant as a replacement for the Win32API
