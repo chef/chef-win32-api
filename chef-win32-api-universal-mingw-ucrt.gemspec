@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.test_files = Dir['test/test*']
   spec.extensions = ['ext/win32/extconf.rb']
   spec.files      = Dir['**/*'].reject{ |f| f.include?('git') }
+  spec.platform   = Gem::Platform.new(%w(universal mingw-ucrt))
 
   if RUBY_VERSION.match?("3.0")
     spec.required_ruby_version = '~> 3.0'
