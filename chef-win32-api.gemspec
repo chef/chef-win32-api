@@ -9,7 +9,9 @@ Gem::Specification.new do |spec|
   spec.homepage   = "http://github.com/cosmo0920/win32-api"
   spec.summary    = "A superior replacement for Win32API"
   spec.extensions = ["ext/win32/extconf.rb"]
-  spec.files      = Dir["**/*"].reject { |f| f.include?("git") }
+  spec.files      = Dir["**/*"].reject { |f|
+    f.include?("git") || f.start_with?("tmp/") || f.start_with?("coverage/")
+  }
 
   spec.required_ruby_version = ">= 3.1"
 
@@ -17,8 +19,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency("test-unit", ">= 3.6.7")
   spec.add_development_dependency("rake")
-  spec.add_development_dependency("rake-compiler", ">= 1.2.9")
-  spec.add_development_dependency("cookstyle", "~> 8.1")
+  spec.add_development_dependency("rake-compiler", "~> 1.3.1")
+  spec.add_development_dependency("cookstyle", "~> 8.5.3")
+  spec.add_development_dependency("simplecov", "~> 0.22")
 
   spec.description = <<-EOF
     The Win32::API library is meant as a replacement for the Win32API

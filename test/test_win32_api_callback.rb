@@ -6,11 +6,8 @@
 # Test case for the Win32::API::Callback class. You should run this as Rake
 # task, i.e. 'rake test', instead of running it directly.
 ############################################################################
-require "rubygems"
-gem "test-unit"
-
+require_relative "test_helper"
 require "win32/api"
-require "test/unit"
 include Win32
 
 class TC_Win32_API_Callback < Test::Unit::TestCase

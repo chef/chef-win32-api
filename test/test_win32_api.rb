@@ -6,8 +6,8 @@
 # Test case for the Win32::API class. You should run this as Rake task,
 # i.e. 'rake test', instead of running it directly.
 ############################################################################
+require_relative "test_helper"
 require "win32/api"
-require "test-unit"
 include Win32
 
 class TC_Win32_API < Test::Unit::TestCase
@@ -20,7 +20,7 @@ class TC_Win32_API < Test::Unit::TestCase
   end
 
   def test_version
-    assert_equal("1.10.1", API::VERSION)
+    assert_equal("1.11.0", API::VERSION)
   end
 
   def test_constructor_basic

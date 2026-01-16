@@ -6,15 +6,15 @@ LABEL Description="win32-api building docker image"
 # Docker creates a layer for every RUN-Statement
 RUN powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
 
-# Ruby 3.0 and 3.1
-RUN powershell \
-	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
-	Invoke-WebRequest -OutFile C:\rubyinstaller-3.0.0-1-x64.exe https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.0.0-1/rubyinstaller-3.0.0-1-x64.exe
-RUN cmd /c "C:\rubyinstaller-3.0.0-1-x64.exe" /silent /dir=c:\ruby30-x64
+# Ruby 3.1 and 3.4
 RUN powershell \
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
 	Invoke-WebRequest -OutFile C:\rubyinstaller-3.1.6-1-x64.exe https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.6-1/rubyinstaller-3.1.6-1-x64.exe
 RUN cmd /c "C:\rubyinstaller-3.1.6-1-x64.exe" /silent /dir=c:\ruby31-x64
+RUN powershell \
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+	Invoke-WebRequest -OutFile C:\rubyinstaller-3.4.1-1-x64.exe https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.4.1-1/rubyinstaller-3.4.1-1-x64.exe
+RUN cmd /c "C:\rubyinstaller-3.4.1-1-x64.exe" /silent /dir=c:\ruby34-x64
 
 # DevKit
 RUN powershell \
@@ -25,6 +25,10 @@ RUN powershell \
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
 	Invoke-WebRequest -OutFile rubyinstaller-devkit-3.1.6-1-x64.exe https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.6-1/rubyinstaller-devkit-3.1.6-1-x64.exe
 RUN cmd /c rubyinstaller-devkit-3.1.6-1-x64.exe -o"c:\DevKit64" -y
+RUN powershell \
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+	Invoke-WebRequest -OutFile rubyinstaller-devkit-3.4.1-1-x64.exe https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.4.1-1/rubyinstaller-devkit-3.4.1-1-x64.exe
+RUN cmd /c rubyinstaller-devkit-3.4.1-1-x64.exe -o"c:\DevKit64" -y
 
 RUN choco install -y git \
     && choco install -y msys2 --params "'/NoPath /NoUpdate /InstallDir:C:\msys64'"
