@@ -1,49 +1,9 @@
 #include <ruby.h>
 #include <windows.h>
 
-// Ruby 1.9.x
-#ifndef RSTRING_PTR
-#define RSTRING_PTR(s) (RSTRING(s)->ptr)
-#endif
-#ifndef RSTRING_LEN
-#define RSTRING_LEN(s) (RSTRING(s)->len)
-#endif
-
-#ifndef RARRAY_PTR
-#define RARRAY_PTR(a) (RARRAY(a)->ptr)
-#endif
-#ifndef RARRAY_LEN
-#define RARRAY_LEN(a) (RARRAY(a)->len)
-#endif
-
-/* Use Ruby defined macro definitions. */
-#if !defined(NUM2SIZET) && !defined(NUM2SSIZET)
-# if defined(HAVE_LONG_LONG) && SIZEOF_SIZE_T > SIZEOF_LONG
-#  define NUM2SIZET(x) ((size_t)NUM2ULL(x))
-#  define NUM2SSIZET(x) ((ssize_t)NUM2LL(x))
-# else
-#  define NUM2SIZET(x) NUM2ULONG(x)
-#  define NUM2SSIZET(x) NUM2LONG(x)
-# endif
-#endif
-
-/* Use Ruby defined macro definitions. */
-#if !defined(SIZET2NUM) && !defined(SSIZET2NUM)
-# if SIZEOF_SIZE_T > SIZEOF_LONG && defined(HAVE_LONG_LONG)
-#  define SIZET2NUM(v) ULL2NUM(v)
-#  define SSIZET2NUM(v) LL2NUM(v)
-# elif SIZEOF_SIZE_T == SIZEOF_LONG
-#  define SIZET2NUM(v) ULONG2NUM(v)
-#  define SSIZET2NUM(v) LONG2NUM(v)
-# else
-#  define SIZET2NUM(v) UINT2NUM(v)
-#  define SSIZET2NUM(v) INT2NUM(v)
-# endif
-#endif
-
 
 #define MAX_BUF 1024
-#define WINDOWS_API_VERSION "1.10.1"
+#define WINDOWS_API_VERSION "1.11.0"
 
 #define _T_VOID     0
 #define _T_LONG     1
@@ -69,12 +29,41 @@ typedef struct ThreadData {
 static inline ThreadData* thread_data_get(void);
 static ID id_thread_data;
 
+static void thread_data_free(void *ptr){
+   if(ptr){
+      xfree(ptr);
+   }
+}
+
+static const rb_data_type_t thread_data_type = {
+   "Win32API::ThreadData",
+   { NULL, thread_data_free, NULL, NULL, },
+   NULL, NULL, RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static void api_free(void *ptr){
+   Win32API* api = (Win32API*)ptr;
+
+   if(api){
+      if(api->library){
+         FreeLibrary(api->library);
+      }
+      xfree(api);
+   }
+}
+
+static const rb_data_type_t api_data_type = {
+   "Win32API",
+   { NULL, api_free, NULL, NULL, },
+   NULL, NULL, RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 static ThreadData* thread_data_init(void)
 {
    ThreadData* td;
    VALUE obj;
 
-   obj = Data_Make_Struct(rb_cObject, ThreadData, NULL, -1, td);
+   obj = TypedData_Make_Struct(rb_cObject, ThreadData, &thread_data_type, td);
    td->win32api_error = 0;
    rb_thread_local_aset(rb_thread_current(), id_thread_data, obj);
 
@@ -85,25 +74,20 @@ static inline ThreadData* thread_data_get()
 {
    VALUE obj = rb_thread_local_aref(rb_thread_current(), id_thread_data);
 
-   if(obj != Qnil && TYPE(obj) == T_DATA){
-      return (ThreadData*) DATA_PTR(obj);
+   if(!NIL_P(obj) && rb_typeddata_is_kind_of(obj, &thread_data_type)){
+      ThreadData* td = NULL;
+      TypedData_Get_Struct(obj, ThreadData, &thread_data_type, td);
+      return td;
    }
 
    return thread_data_init();
 }
 
-static void api_free(Win32API* ptr){
-   if(ptr->library)
-      FreeLibrary(ptr->library);
-
-   if(ptr)
-      free(ptr);
-}
-
 static VALUE api_allocate(VALUE klass){
-   Win32API* ptr = malloc(sizeof(Win32API));
+   Win32API* ptr;
+   VALUE obj = TypedData_Make_Struct(klass, Win32API, &api_data_type, ptr);
    memset(ptr, 0, sizeof(*ptr));
-   return Data_Wrap_Struct(klass, 0, api_free, ptr);
+   return obj;
 }
 
 /* Helper function that converts the error number returned by GetLastError()
@@ -300,7 +284,7 @@ static VALUE api_init(int argc, VALUE* argv, VALUE self)
 
    rb_scan_args(argc, argv, "13", &v_proc, &v_proto, &v_return, &v_dll);
 
-   Data_Get_Struct(self, Win32API, ptr);
+   TypedData_Get_Struct(self, Win32API, &api_data_type, ptr);
 
    // Convert a string prototype to an array of characters
    if(rb_respond_to(v_proto, rb_intern("split")))
@@ -499,7 +483,7 @@ static VALUE func_init(int argc, VALUE* argv, VALUE self){
 
    rb_scan_args(argc, argv, "12", &v_address, &v_proto, &v_return);
 
-   Data_Get_Struct(self, Win32API, ptr);
+   TypedData_Get_Struct(self, Win32API, &api_data_type, ptr);
 
    // Convert a string prototype to an array of characters
    if(rb_respond_to(v_proto, rb_intern("split")))
@@ -597,6 +581,59 @@ static VALUE func_init(int argc, VALUE* argv, VALUE self){
 typedef struct {
    uintptr_t params[20];
 } CALLPARAM;
+
+static uintptr_t call_function(FARPROC fn, int len, uintptr_t *params)
+{
+   switch(len){
+      case 0:
+         return ((uintptr_t (WINAPI *)(void))fn)();
+      case 1:
+         return ((uintptr_t (WINAPI *)(uintptr_t))fn)(params[0]);
+      case 2:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t))fn)(params[0], params[1]);
+      case 3:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2]);
+      case 4:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3]);
+      case 5:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4]);
+      case 6:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5]);
+      case 7:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+      case 8:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]);
+      case 9:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8]);
+      case 10:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
+      case 11:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10]);
+      case 12:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11]);
+      case 13:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12]);
+      case 14:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13]);
+      case 15:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14]);
+      case 16:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14], params[15]);
+      case 17:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14], params[15], params[16]);
+      case 18:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14], params[15], params[16], params[17]);
+      case 19:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14], params[15], params[16], params[17], params[18]);
+      case 20:
+         return ((uintptr_t (WINAPI *)(uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))fn)(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14], params[15], params[16], params[17], params[18], params[19]);
+      default:
+         rb_raise(rb_eArgError, "number of parameters exceed 20!");
+   }
+
+   /* Not reached */
+   return 0;
+}
 
 
 DWORD CallbackFunction(CALLPARAM param, VALUE callback)
@@ -817,7 +854,7 @@ static VALUE api_call(int argc, VALUE* argv, VALUE self){
       uintptr_t params[20];
    } param;
 
-   Data_Get_Struct(self, Win32API, ptr);
+   TypedData_Get_Struct(self, Win32API, &api_data_type, ptr);
 
    rb_scan_args(argc, argv, "0*", &v_args);
 
@@ -879,132 +916,13 @@ static VALUE api_call(int argc, VALUE* argv, VALUE self){
          }
    }
 
-   /* Call the function, get the return value */
-   if(strcmp(StringValuePtr(RARRAY_PTR(v_proto)[0]), "V") == 0 && len == 1)
-   {
-        return_value = ptr->function();
-   }
-   else
-   {   
-        switch(len)
-        {
-        case 0:
-            return_value = ptr->function();
-            break;
-        case 1:
-            return_value = ptr->function(param.params[0]);
-            break;
-        case 2:
-            return_value = ptr->function(param.params[0], param.params[1]);
-            break;
-        case 3:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2]);
-            break;
-        case 4:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3]);
-            break;
-        case 5:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4]);
-            break;
-        case 6:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5]);
-            break;
-        case 7:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5], 
-                param.params[6]);
-            break;
-        case 8:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7]);
-            break;
-        case 9:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8]);
-            break;
-        case 10:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5], 
-                param.params[6], param.params[7], param.params[8], param.params[9]);
-            break;
-        case 11:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5], 
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10]);
-            break;
-        case 12:
-            return_value = ptr->function(param.params[0], param.params[1], 
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11]);
-            break;
-        case 13:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12]);
-            break;
-        case 14:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13]);
-            break;
-        case 15:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14]);
-            break;
-        case 16:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14], param.params[15]);
-            break;
-        case 17:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14], param.params[15], param.params[16]);
-            break;
-        case 18:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14], param.params[15], param.params[16], param.params[17]);
-            break;
-        case 19:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14], param.params[15], param.params[16], param.params[17],
-                param.params[18]);
-            break;
-        case 20:
-            return_value = ptr->function(param.params[0], param.params[1],
-                param.params[2], param.params[3], param.params[4], param.params[5],
-                param.params[6], param.params[7], param.params[8], param.params[9],
-                param.params[10], param.params[11], param.params[12], param.params[13],
-                param.params[14], param.params[15], param.params[16], param.params[17],
-                param.params[18], param.params[19]);
-            break;
-        default:
-            rb_raise(rb_eArgError,"number of parameters exceed 20!");
-        }
-   }
+      /* Call the function, get the return value */
+      if(strcmp(StringValuePtr(RARRAY_PTR(v_proto)[0]), "V") == 0 && len == 1){
+        return_value = call_function(ptr->function, 0, param.params);
+      }
+      else{
+        return_value = call_function(ptr->function, len, param.params);
+      }
 
    thread_data->win32api_error = GetLastError();
 

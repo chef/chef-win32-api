@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 ############################################################################
 # test_win32_api.rb
 #
 # Test case for the Win32::API class. You should run this as Rake task,
 # i.e. 'rake test', instead of running it directly.
 ############################################################################
+require_relative "test_helper"
 require "win32/api"
-require "test-unit"
 include Win32
 
 class TC_Win32_API < Test::Unit::TestCase
@@ -18,7 +20,7 @@ class TC_Win32_API < Test::Unit::TestCase
   end
 
   def test_version
-    assert_equal("1.10.1", API::VERSION)
+    assert_equal("1.11.0", API::VERSION)
   end
 
   def test_constructor_basic
@@ -37,6 +39,32 @@ class TC_Win32_API < Test::Unit::TestCase
   def test_call_with_void
     assert_nothing_raised { @gle.call }
     assert_nothing_raised { @gle.call(nil) }
+  end
+
+  # Exercises every parameter count (0 through 20) supported by the native
+  # call_function() dispatcher introduced when the old inline switch
+  # statement in api_call was refactored. GetTickCount takes no real
+  # arguments, so any extra values passed are simply ignored by Windows,
+  # making it a safe way to validate that each arity is dispatched to the
+  # correct function pointer cast without corrupting the call stack.
+  def test_call_arity_dispatch
+    (0..20).each do |arity|
+      api = API.new("GetTickCount", "L" * arity, "L")
+      assert_nothing_raised("call_function dispatch failed for arity #{arity}") {
+        api.call(*([0] * arity))
+      }
+    end
+  end
+
+  def test_call_arity_boundary_error
+    assert_raise(ArgumentError) { API.new("GetTickCount", "L" * 21, "L") }
+  end
+
+  def test_call_arity_functional_three_params
+    lstrcpyn = API.new("lstrcpynA", "PPL", "P")
+    dest = (0.chr * 32).dup
+    assert_nothing_raised { lstrcpyn.call(dest, "hello world".dup, 6) }
+    assert_equal("hello", dest.unpack1("Z*"))
   end
 
   def test_call_return_value_on_failure

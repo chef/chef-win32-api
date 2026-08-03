@@ -1,13 +1,12 @@
+# frozen_string_literal: true
+
 ########################################################################
 # test_win32_api_function.rb
 #
 # Test case for the Win32::API::Function class. You should run these
 # tests via the 'rake test' task.
 ########################################################################
-require "rubygems"
-gem "test-unit"
-
-require "test/unit"
+require_relative "test_helper"
 require "win32/api"
 include Win32
 
