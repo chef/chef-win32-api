@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 3.1"
 
-  spec.extra_rdoc_files = ["CHANGES", "MANIFEST", "ext/win32/api.c"]
+  spec.extra_rdoc_files = ["CHANGELOG.md", "MANIFEST", "ext/win32/api.c"]
 
   spec.add_development_dependency("test-unit", ">= 3.6.7")
   spec.add_development_dependency("rake")

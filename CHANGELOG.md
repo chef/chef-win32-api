@@ -1,107 +1,118 @@
-== 1.10.1 - 23-Apr-2021
+<!-- usage documentation: http://expeditor-docs.es.chef.io/configuration/changelog/ -->
+
+# chef-win32-api Changelog
+
+<!-- latest_release -->
+<!-- latest_release -->
+<!-- release_rollup since=1.11.0 -->
+### Changes not yet released to rubygems.org
+
+<!-- release_rollup -->
+<!-- latest_stable_release -->
+## 1.10.1 - 23-Apr-2021
 * Use ULONG2NUM() for API.last_error to avoid truncate
 
-== 1.10.0 - 19-Apr-2021
+## 1.10.0 - 19-Apr-2021
 * Add Ruby 3.1 snapshot support
 * Add API.last_error
 
-== 1.9.2 - 13-Sep-2020
+## 1.9.2 - 13-Sep-2020
 * Handle Ruby 3.0 snapshot (formerly known as Ruby 2.8).
 
-== 1.9.1 - 14-Jul-2020
+## 1.9.1 - 14-Jul-2020
 * Handle whether tainted support or not.
 
-== 1.9.0 - 6-Jan-2020
+## 1.9.0 - 6-Jan-2020
 * Add Ruby 2.8 snapshot support.
 * Now includes binaries for Ruby 2.8 both 32 and 64 bit versions.
 * Use RubyInstaller 2.7.0-1 for Ruby 2.7 binaries.
 
-== 1.8.0 - 6-Jan-2019
+## 1.8.0 - 6-Jan-2019
 * Add Ruby 2.7 snapshot support.
 * Now includes binaries for Ruby 2.7 both 32 and 64 bit versions.
 * Use RubyInstaller 2.6.0-1 for Ruby 2.6 binaries.
 
-== 1.7.1 - 4-Jan-2018
+## 1.7.1 - 4-Jan-2018
 * Add Ruby 2.6 snapshot support.
 * Now includes binaries for Ruby 2.6 both 32 and 64 bit versions.
 * Use RubyInstaller 2.5.0-1 for Ruby 2.5 binaries.
 
-== 1.7.0 - 28-Nov-2017
+## 1.7.0 - 28-Nov-2017
 * Add gcc option to fix crash on RubyInstaller2 x86
 
-== 1.7.0.pre1 - 16-July-2017
+## 1.7.0.pre1 - 16-July-2017
 * Add Ruby 2.5 snapshot support.
 * Now includes binaries for Ruby 2.5 for both 32 and 64 bit versions.
 
-== 1.6.1.2 - 2-Feb-2017
+## 1.6.1.2 - 2-Feb-2017
 * Fix wrong gem packaging.
 
-== 1.6.1.1 - 31-Jan-2017 (yanked)
+## 1.6.1.1 - 31-Jan-2017 (yanked)
 * Fix wrong returning version number
 
-== 1.6.1 - 31-Jan-2017 (yanked)
+## 1.6.1 - 31-Jan-2017 (yanked)
 * Depends on MSYS2 based RubyInstaller2 to create binaries for Ruby 2.4.0.
 
-== 1.6.1.beta1 - 14-Jan-2017
+## 1.6.1.beta1 - 14-Jan-2017
 * Now includes binaries for Ruby 2.4 for both 32 and 64 bit versions.
 * Try to depends on MSYS2 based RubyInstaller2 on Ruby 2.4.
 
-== 1.6.0 - 09-Jun-2016
+## 1.6.0 - 09-Jun-2016
 * Now includes binaries for Ruby 2.3 for both 32 and 64 bit versions.
 * Now drop support Ruby 1.9 or earlier.
 * Some README and gemspec updates, including new maintainer information.
 
-== 1.5.3 - 18-Mar-2015
+## 1.5.3 - 18-Mar-2015
 * Now includes binaries for Ruby 2.2 for both 32 and 64 bit versions.
 * Fixed potential stack corruption caused by callbacks. Thanks go to
   rickerliang for the spot and patch.
 * Some minor updates and additions to the Rakefile.
 
-== 1.5.2 - 11-Oct-2014
+## 1.5.2 - 11-Oct-2014
 * Now includes binaries for Ruby 2.1 for both 32 and 64 bit versions.
 * Some refactoring of the gem:binary task, mostly for me.
 
-== 1.5.1 - 14-Feb-2014
+## 1.5.1 - 14-Feb-2014
 * Fixed a potential zero-initialization issue. Thanks go to Peter Huene
   for the spot and the patch.
 * Added rake as a development dependency.
 
-== 1.5.0 - 22-Aug-2013
+## 1.5.0 - 22-Aug-2013
 * Fixes for Ruby x64.
 * There are now separate 32 and 64 bit binaries packaged for Ruby 2.x.
 * Updates to the Rakefile for the gem:binary task.
 * Some README updates, including Future Plans.
 
-== 1.4.9 - 14-Jul-2013
+## 1.4.9 - 14-Jul-2013
 * Added a binary for Ruby 2.0.
 * Add devkit to Rakefile for the gem:binary task.
 
-== 1.4.8 - 16-Jan-2011
+## 1.4.8 - 16-Jan-2011
 * A binary for both 1.8.x and 1.9.x is now shipped as part of the binary
   build. A stub file is used to dynamically require the correct binary based
   on your current version of Ruby.
 * Some updates to the Rakefile to help build multiple binaries.
 
-== 1.4.7 - 4-Dec-2010
+## 1.4.7 - 4-Dec-2010
 * An internal error formatting function now resorts to the default
   LANGID on error 1815 (ERROR_RESOURCE_LANG_NOT_FOUND). Thanks go to
   Little Snake for the spot.
 * Added a default Rake task and refactored the clean task.
 
-== 1.4.6 - 9-Feb-2010
+## 1.4.6 - 9-Feb-2010
 * Fixed a warning that showed up with MinGW/gcc caused by an unnecessary
   pointer dereference.
 * Some updates to the Rakefile and gemspec. Gem building is now handled via
   Rake tasks.
 * Minor updates to the test suite.
 
-== 1.4.5 - 24-Aug-2009
+## 1.4.5 - 24-Aug-2009
 * Reverted the change in 1.4.4. We need unsigned longs in a few cases.
   Consequently, you should upgrade windows-pr to 1.0.8 or later because
   some return values were set to -1 instead of 0xFFFFFFFF as they are now.
 * Updated one test to validate return value from failed function.
 
-== 1.4.4 - 18-Aug-2009
+## 1.4.4 - 18-Aug-2009
 * Fixed a bug where functions that returned a long return type were unsigned
   instead of signed.
 * The Rakefile has been refactored somewhat, including the removal of FFI
@@ -109,20 +120,20 @@
 * The test-unit library is now a development dependency instead of a runtime
   dependency.
 
-== 1.4.3 - 23-Jun-2009
+## 1.4.3 - 23-Jun-2009
 * Bug fix for mingw.
 * License now set to Artistic 2.0.
 
-== 1.4.2 - 31-May-2009
+## 1.4.2 - 31-May-2009
 * Updated the internal StringError() function to better handle the possibility
   of the English .mui file not being found. Thanks go to Michel Demazure for
   the spot.
 
-== 1.4.1 - 29-May-2009
+## 1.4.1 - 29-May-2009
 * Callback handling improvements.
 * Updated the gemspec description.
 
-== 1.4.0 - 19-Feb-2009
+## 1.4.0 - 19-Feb-2009
 * Now compatible with Ruby 1.9.x.
 * In what will go down as, "It seemed like a good idea at the time", I have
   removed the feature where W (wide) character functions were used first if
@@ -132,7 +143,7 @@
 * Fixed RF bug #23944 - bad error message for MSVCRT functions that failed
   to load properly.
 
-== 1.3.0 - 1-Jan-2009
+## 1.3.0 - 1-Jan-2009
 * Fixed RubyForge bug #23395, which was caused by inadvertently modifying
   a variable within a loop. This caused callbacks to fail in certain
   situations.
@@ -145,7 +156,7 @@
 * Refactored a high iteration test so that it counts as only one test
   instead of 1000.
 
-== 1.2.2 - 27-Nov-2008
+## 1.2.2 - 27-Nov-2008
 * Fixed bug in the error message for illegal prototypes and illegal return
   types where the character in question would come out as empty or garbage.
 * Passing a bad return type to Win32::API::Callback now raises an error.
@@ -160,14 +171,14 @@
 * Added tests for the Win32::API::Callback#address method.
 * Added tests to all Win32::API classes that explicitly check error messages.
 
-== 1.2.1 - 14-Nov-2008
+## 1.2.1 - 14-Nov-2008
 * Fixed and updated callback handling.
 * Fixed wide string return handling for pointers and strings.
 * Added the Win32::API::Callback#address instance method.
 * All errors are now in English instead of your native language, because
   that's what Ruby itself does.
 
-== 1.2.0 - 22-Jul-2008
+## 1.2.0 - 22-Jul-2008
 * Added support for the 'S' (string) prototype and return type. It can be
   used instead of 'P' (pointer) for const char*.
 * Some internal refactoring. The attempts to load ANSI and/or Wide character
@@ -176,12 +187,12 @@
 * Added a couple of gem building Rake tasks.
 * Added a few more tests.
 
-== 1.1.0 - 12-Jun-2008
+## 1.1.0 - 12-Jun-2008
 * Added the Windows::API::Function class. This is a subclass of Win32::API
   meant only for use with raw function pointers.
 * Some documentation updates in the source and README files.
 
-== 1.0.6 - 18-Apr-2008
+## 1.0.6 - 18-Apr-2008
 * Added the effective_function_name method. This allows you to see what the
   actual function name is that was defined, e.g. GetUserNameA vs GetUserNameW.
 * Replaced an instance of _tcscmp with strcmp. The case in question was always
@@ -191,32 +202,34 @@
   you're using a version of Ruby built with VC++ 8 or later. This builds a
   ruby.exe.manifest file (if it doesn't already exist).
 
-== 1.0.5 - 20-Nov-2007
+## 1.0.5 - 20-Nov-2007
 * The API.new method now defaults to "W" (wide character functions) before "A"
   (ANSI functions) if the $KCODE global variable is set to 'u' (UTF8).
 * Minor improvements to the Rakefile.
 
-== 1.0.4 - 26-Oct-2007
+## 1.0.4 - 26-Oct-2007
 * Fixed a bug where methods that returned pointers ('P') could choke if the
   resulting pointer was 0 or NULL. In this case, nil is now returned instead.
 * Tweak to the extconf.rb file that helps the gem build it from source
   properly.
 
-== 1.0.3 - 28-Sep-2007
+## 1.0.3 - 28-Sep-2007
 * Fixed a subtle but dangerous copy-on-write bug in the API#call method.
 
-== 1.0.2 - 28-Sep-2007
+## 1.0.2 - 28-Sep-2007
 * Fixed a bug in an internal struct member that was causing segfaults. Thanks
   go to Lars Olsson for the spot.
 * Fixed the 'install' task in the Rakefile. This only affected native builds,
   not the prebuilt binary.
 * Added a few more tests.
 
-== 1.0.1 - 27-Sep-2007
+## 1.0.1 - 27-Sep-2007
 * Functions declared with a void prototype no longer require an explicit nil
   argument to fulfill the arity requirement. You can still call them with an
   explicit nil if you wish, however.
 * Fixed the gemspec for the native build.
 
-== 1.0.0 - 14-Sep-2007
+## 1.0.0 - 14-Sep-2007
 * Initial release
+
+<!-- latest_stable_release -->
