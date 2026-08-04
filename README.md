@@ -130,3 +130,6 @@
   Park Heesob
 
   Hiroshi Hatake
+
+# Copyright
+See [COPYRIGHT.md](./COPYRIGHT.md).
