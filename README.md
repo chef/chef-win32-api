@@ -1,6 +1,7 @@
 # Description
   This is a drop-in replacement for the Win32API library currently part of
-  Ruby's standard library. This fork is taken by Chef Infra to update it to Ruby 3.1 support.
+  Ruby's standard library. This fork, published as the `chef-win32-api` gem,
+  is maintained by Chef Infra to update it to Ruby 3.1 support.
   Minimum supported Ruby version: 3.1 (CI covers 3.1 and 3.4).
 
 # Synopsis
@@ -81,12 +82,12 @@
   best benefit our end users.
 
 # Multiple Binaries
-  As of win32-api 1.4.8 a binary gem is shipped that contains binaries for
-  both Ruby 1.8, Ruby 1.9, and 2.x. For Ruby 2.x, both 32 and 64 bit binaries
-  are included as of release 1.5.0.
+  Historically (as of win32-api 1.4.8) a binary gem was shipped that
+  contained binaries for both Ruby 1.8, Ruby 1.9, and 2.x, with lib/win32
+  dynamically requiring the correct binary based on your version of Ruby.
 
-  The file under lib/win32 dynamically requires the correct binary based on
-  your version of Ruby.
+  This is no longer the case. lib/win32/api.rb simply requires the compiled
+  win32/api.so built for the Ruby version the gem was installed against.
 
 # Documentation
   The source file contains inline RDoc documentation. If you installed
@@ -102,13 +103,7 @@
   Possible callback issues when dealing with multi-threaded applications.
 
   Please submit any bug reports to the project page at
-  https://github.com/cosmo0920/win32-api
-
-## Contributions
-  Although this library is free, please consider having your company
-  setup a gittip if used by your company professionally.
-
-  http://www.gittip.com/djberg96/
+  https://github.com/chef/chef-win32-api
 
 # Future Plans
   I really don't have future plans for this library since you should use FFI
